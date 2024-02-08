@@ -31,7 +31,8 @@ dat_lcc <-  dat |>
       method == "mj" ~ "M3",
       method == "opto" ~ "M4"
     ),
-    across(c(ID_num,method), factor)) |> 
+    across(c(ID_num,method), factor)
+    ) |> 
   lcc::lcc(
   # data = dat,
   subject = "ID_num",
@@ -159,23 +160,23 @@ fdi_jmc_plot + fdi_opto_plot + fdi_mj_plot +
                   caption = "Each compared to gold standard (Force Decks Impulse-Momentum)")
 
 
-dat |>
-  filter(method == "M4") |>
-SimplyAgree::reli_stats(
-  # data = dat,
-  measure = "jump_height",
-  item = "session_no",
-  id = "ID_num",
-  wide = FALSE
-)
 
 
+# reliability
 
+rel_fdi_lcc <-  dat |>
+  mutate(
+    across(c(ID_num,method), factor)
+  ) |> 
+  filter(method == "fdi") |>
+  cccrm::cccvc(
+    rind = "ID_num",
+    ry = "jump_height",
+    rmet = "session_no",
+    int = TRUE
+    )
 
-
-
-
-
+sqrt(rel_fdi_lcc$model$sigma)
 
 
 

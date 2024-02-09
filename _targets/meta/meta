@@ -1,0 +1,16 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+agree_model|stem|e8b10a288d392f7f|e028d44f7810c9e1|a13692205260468b|-592692774||t19762.4111207055s|2da402a946d20212|354|rds|local|vector|||77.69||
+agree_plot|stem|e3e246aa4ffc9f54|a74f5924529d86c2|3bd336e56ec1ceb3|-1641381706||t19762.4161846003s|fba8d74cc786d9fd|314751|rds|local|vector|||0.17||
+agree_plot_tiff|stem|b11b9e1037baed82|8fe1a44fe3a1e515|524ce4f965c44770|664171846||t19762.4161935383s|c6fbfb9abe15abfd|72|rds|local|vector|||0.75||
+data|stem|67557acf413dad9d|8495921f878ccdc2|fec7783cc5248a75|-2078757027||t19762.3981128449s|099b7a4f96e543d1|1241|rds|local|vector|||0.34|1m22mExpected 3 pieces. Missing pieces filled with NA in 144 rows 7, 8, 9, 10,11, 12, 22, 23, 24, 25, 26, 27, 37, 38, 39, 40, 41, 42, 52, 53, ....|
+file_1|stem|07e49ee37c83b04e|deabbbdf25cc1df9|ef46db3751d8e999|-129340564|data/data_collection_s1.csv|t19754.7334887941s|42613c1d0fb78755|1263|file|local|vector|||0.76|package tibble was built under R version 4.2.3. package dplyr was built under R version 4.2.3. package forcats was built under R version 4.2.3|
+file_2|stem|912cd798632e099d|9b71b2fb6990a80e|ef46db3751d8e999|-212393068|data/data_collection_s2.csv|t19754.7322124406s|773fdab5cb6ef136|1221|file|local|vector|||0||
+fit_agree_model|function|982a6813fcd5ba73|||||||||||||||
+fit_reli_models|function|f1b1cccc73e8faed|||||||||||||||
+make_agree_plot|function|2bf4c6d74464206a|||||||||||||||
+make_plot_tiff|function|aa119d7b32859d99|||||||||||||||
+make_reli_plot|function|6d6f5a48b869070e|||||||||||||||
+prepare_data|function|20679d5a9cb50514|||||||||||||||
+reli_models|stem|d062053cf9860180|e3c9ae5e295bc0a1|2699b4cdde9d8599|1792590206||t19762.4126425044s|253d6f95309bef1a|362|rds|local|vector|||0.08||
+reli_plot|stem|eac114d585c61f59|807f06d5bd5a5de7|24908ff854f32250|1571174253||t19762.4155109159s|1c830a668973e310|221905|rds|local|vector|||0.18||
+reli_plot_tiff|stem|60dd3ccb11b3aeae|6ec1dd086625be38|26a8d71947ec0c44|-1083417644||t19762.4155185928s|79365c26e374407f|71|rds|local|vector|||0.66||

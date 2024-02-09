@@ -39,17 +39,17 @@ dat_lcc <-  dat |>
   resp = "jump_height",
   method = "method",
   time = "session_no",
-  interaction = TRUE,
+  # interaction = TRUE,
   REML = TRUE,
-  ci = TRUE,
-  components = TRUE
+  ci = TRUE
 )
 
 summary(dat_lcc, type = "lcc")
 
 plot(dat_lcc)
 
-df_lcc <- unnest(as.tibble((dat_lcc$Summary.lcc$fitted))) |>
+df_lcc <- unnest(tibble((dat_lcc$Summary.lcc$fitted)),
+                 cols = c(`(dat_lcc$Summary.lcc$fitted)`)) |>
   rename("session_no" = Time) |>
   mutate(facet_lab = "Session Number")
 
@@ -155,7 +155,7 @@ fdi_mj_plot <- dat |>
 
 fdi_jmc_plot + fdi_opto_plot + fdi_mj_plot +
   plot_layout(axes = "collect") +
-  plot_annotation(title = "Observed Jump Heights",
+  plot_annotation(title = "Agreement Between Methods",
                   subtitle = "Concordance Correlation Coefficients with Interval Estimates",
                   caption = "Each compared to gold standard (Force Decks Impulse-Momentum)")
 
@@ -164,20 +164,197 @@ fdi_jmc_plot + fdi_opto_plot + fdi_mj_plot +
 
 # reliability
 
-rel_fdi_lcc <-  dat |>
-  mutate(
-    across(c(ID_num,method), factor)
-  ) |> 
-  filter(method == "fdi") |>
-  cccrm::cccvc(
-    rind = "ID_num",
-    ry = "jump_height",
-    rmet = "session_no",
-    int = TRUE
+# https://www.researchgate.net/publication/231860714_Estimation_of_the_concordance_correlation_coefficient_for_repeated_measures_using_SAS_and_R
+
+reli_models <- tibble(method = as.character(),
+                      CCC = as.numeric(),
+                      Lower = as.numeric(),
+                      Upper = as.numeric(),
+                      SEM = as.numeric())
+
+for(i in unique(dat$method)) {
+  
+  reli_ccc <- dat |>
+    mutate(
+      across(c(ID_num,method), factor)
+    ) |> 
+    filter(method == i) |>
+    cccrm::cccvc(
+      rind = "ID_num",
+      ry = "jump_height",
+      rmet = "session_no",
+      # int = TRUE
     )
+  
+  reli_models <- rbind(reli_models,
+                       tibble(method = i,
+                              CCC = reli_ccc$ccc[1],
+                              Lower = reli_ccc$ccc[2],
+                              Upper = reli_ccc$ccc[3],
+                              SEM = sqrt(reli_ccc$model$sigma)))
+}
 
-sqrt(rel_fdi_lcc$model$sigma)
+
+fdi_reli_plot <- dat |>
+  filter(method == "fdi") |>
+  pivot_wider(id_cols = c(ID_num, trial),
+              names_from = "session_no", 
+              values_from = "jump_height") |>
+  ggplot(aes(x=`1`, y=`2`)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed") +
+  geom_text(data = filter(reli_models, method == "fdi"),
+            aes(label = glue::glue("SEM = {round(SEM,2)}")),
+            x = 50,
+            y = 25,
+            size = 3
+  ) +
+  geom_text(data = filter(reli_models, method == "fdi"),
+            aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
+            x = 50,
+            y = 20,
+            size = 3,
+            parse = TRUE
+  ) +
+  geom_text(data = filter(reli_models, method == "fdi"),
+            aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+            x = 50,
+            y = 15,
+            size = 3
+  ) +
+  scale_x_continuous(limits = c(10,60)) +
+  scale_y_continuous(limits = c(10,60)) +
+  labs(
+    x = "Session 1",
+    y = "Session 2",
+    title = "Force Decks Impulse Momementum"
+  ) +
+  theme_bw() +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(size = 12))
+
+jmc_reli_plot <- dat |>
+  filter(method == "jmc") |>
+  pivot_wider(id_cols = c(ID_num, trial),
+              names_from = "session_no", 
+              values_from = "jump_height") |>
+  ggplot(aes(x=`1`, y=`2`)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed") +
+  geom_text(data = filter(reli_models, method == "jmc"),
+            aes(label = glue::glue("SEM = {round(SEM,2)}")),
+            x = 50,
+            y = 25,
+            size = 3
+  ) +
+  geom_text(data = filter(reli_models, method == "jmc"),
+            aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
+            x = 50,
+            y = 20,
+            size = 3,
+            parse = TRUE
+  ) +
+  geom_text(data = filter(reli_models, method == "jmc"),
+            aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+            x = 50,
+            y = 15,
+            size = 3
+  ) +
+  scale_x_continuous(limits = c(10,60)) +
+  scale_y_continuous(limits = c(10,60)) +
+  labs(
+    x = "Session 1",
+    y = "Session 2",
+    title = "Jump Mat"
+  ) +
+  theme_bw() +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(size = 12))
+
+opto_reli_plot <- dat |>
+  filter(method == "opto") |>
+  pivot_wider(id_cols = c(ID_num, trial),
+              names_from = "session_no", 
+              values_from = "jump_height") |>
+  ggplot(aes(x=`1`, y=`2`)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed") +
+  geom_text(data = filter(reli_models, method == "opto"),
+            aes(label = glue::glue("SEM = {round(SEM,2)}")),
+            x = 50,
+            y = 25,
+            size = 3
+  ) +
+  geom_text(data = filter(reli_models, method == "opto"),
+            aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
+            x = 50,
+            y = 20,
+            size = 3,
+            parse = TRUE
+  ) +
+  geom_text(data = filter(reli_models, method == "opto"),
+            aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+            x = 50,
+            y = 15,
+            size = 3
+  ) +
+  scale_x_continuous(limits = c(10,60)) +
+  scale_y_continuous(limits = c(10,60)) +
+  labs(
+    x = "Session 1",
+    y = "Session 2",
+    title = "Optojump"
+  ) +
+  theme_bw() +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(size = 12))
+
+mj_reli_plot <- dat |>
+  filter(method == "mj") |>
+  pivot_wider(id_cols = c(ID_num, trial),
+              names_from = "session_no", 
+              values_from = "jump_height") |>
+  ggplot(aes(x=`1`, y=`2`)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed") +
+  geom_text(data = filter(reli_models, method == "mj"),
+            aes(label = glue::glue("SEM = {round(SEM,2)}")),
+            x = 50,
+            y = 25,
+            size = 3
+  ) +
+  geom_text(data = filter(reli_models, method == "mj"),
+            aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
+            x = 50,
+            y = 20,
+            size = 3,
+            parse = TRUE
+  ) +
+  geom_text(data = filter(reli_models, method == "mj"),
+            aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+            x = 50,
+            y = 15,
+            size = 3
+  ) +
+  scale_x_continuous(limits = c(10,60)) +
+  scale_y_continuous(limits = c(10,60)) +
+  labs(
+    x = "Session 1",
+    y = "Session 2",
+    title = "MyJump App"
+  ) +
+  theme_bw() +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(size = 12))
 
 
+fdi_reli_plot + jmc_reli_plot + opto_reli_plot + mj_reli_plot +
+  plot_layout(axes = "collect") +
+  plot_annotation(title = "Reliability Across Sessions",
+                  subtitle = "Standard Error of Measurement and Concordance Correlation Coefficients with Interval Estimates")
 
 

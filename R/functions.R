@@ -95,7 +95,7 @@ make_agree_plot <- function(data, agree_model) {
               parse = TRUE
     ) +
     geom_text(data = agree_model[1:2,],
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 15,
               size = 3
@@ -127,7 +127,7 @@ make_agree_plot <- function(data, agree_model) {
               parse = TRUE
     ) +
     geom_text(data = agree_model[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 15,
               size = 3
@@ -160,7 +160,7 @@ make_agree_plot <- function(data, agree_model) {
               parse = TRUE
     ) +
     geom_text(data = agree_model[5:6,],
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 15,
               size = 3
@@ -209,7 +209,7 @@ make_reli_plot <- function(data, reli_models) {
               parse = TRUE
     ) +
     geom_text(data = filter(reli_models, method == "fdi"),
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 17.5,
               size = 3
@@ -248,7 +248,7 @@ make_reli_plot <- function(data, reli_models) {
               parse = TRUE
     ) +
     geom_text(data = filter(reli_models, method == "jmc"),
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 17.5,
               size = 3
@@ -287,7 +287,7 @@ make_reli_plot <- function(data, reli_models) {
               parse = TRUE
     ) +
     geom_text(data = filter(reli_models, method == "opto"),
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 17.5,
               size = 3
@@ -326,7 +326,7 @@ make_reli_plot <- function(data, reli_models) {
               parse = TRUE
     ) +
     geom_text(data = filter(reli_models, method == "mj"),
-              aes(label = glue::glue("[95%CI: {round(Upper,2)}, {round(Lower,2)}]")),
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 17.5,
               size = 3

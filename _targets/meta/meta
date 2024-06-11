@@ -1,16 +1,18 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-agree_model|stem|7b48234718d19b8d|e028d44f7810c9e1|12611532cf7fee41|-592692774||t19794.4799016785s|2da402a946d20212|354|rds|local|vector|||96.59||
-agree_plot|stem|6fddcdb80c6c7f6b|a74f5924529d86c2|5e8ca2017417d16d|-1641381706||t19794.4799061009s|edf4b14034937fb7|315848|rds|local|vector|||0.15||
-agree_plot_tiff|stem|b11b9e1037baed82|8fe1a44fe3a1e515|a19986bf84c9c7c9|664171846||t19794.4799202154s|c6fbfb9abe15abfd|72|rds|local|vector|||0.94||
-data|stem|3002d420fd4ad675|8495921f878ccdc2|f4eb95c9abdf9521|-2078757027||t19794.4787836002s|69fe2113a3a68a0d|1475|rds|local|vector|||0.59|1m22mExpected 3 pieces. Missing pieces filled with NA in 240 rows 7, 8, 9, 10,11, 12, 22, 23, 24, 25, 26, 27, 37, 38, 39, 40, 41, 42, 52, 53, ....|
-file_1|stem|ffe66ea28547d43f|deabbbdf25cc1df9|ef46db3751d8e999|-129340564|data/data_collection_s1.csv|t19794.4780925628s|d844b9f70a37959a|1827|file|local|vector|||0.77|package tibble was built under R version 4.2.3. package dplyr was built under R version 4.2.3. package forcats was built under R version 4.2.3|
-file_2|stem|2224bff4e2938b00|9b71b2fb6990a80e|ef46db3751d8e999|-212393068|data/data_collection_s2.csv|t19794.4784724806s|d844b9f70a37959a|1827|file|local|vector|||0||
-fit_agree_model|function|982a6813fcd5ba73|||||||||||||||
-fit_reli_models|function|f1b1cccc73e8faed|||||||||||||||
-make_agree_plot|function|ce91ac2211412f9d|||||||||||||||
-make_plot_tiff|function|aa119d7b32859d99|||||||||||||||
-make_reli_plot|function|c378952dce742986|||||||||||||||
-prepare_data|function|20679d5a9cb50514|||||||||||||||
-reli_models|stem|c9b88ac55cb8757c|e3c9ae5e295bc0a1|e212c491c2119d42|1792590206||t19794.4799026595s|cb356512a9ae71c0|361|rds|local|vector|||0.08||
-reli_plot|stem|cd74a0431da0217a|807f06d5bd5a5de7|0ab120206813214e|1571174253||t19794.4799092407s|9279f5f232c19211|224110|rds|local|vector|||0.16||
-reli_plot_tiff|stem|60dd3ccb11b3aeae|6ec1dd086625be38|66d39bcfc9bb4d23|-1083417644||t19794.4799266666s|79365c26e374407f|71|rds|local|vector|||0.55||
+agree_model|stem|9d2ad7ff2881eaa1|52cda8bccea36fb1|483bc89ab7eae46e|-186591880||t19885.519531938s|a70e3cfa7c565d07|575|rds|local|vector|||121.98||
+agree_model_results|stem|d1e88ede9ea488f1|b3e3cfbb9a687cc7|c25777b31ae6235e|1252300494||t19885.4984544346s||356|rds|local|vector|||0.06||Cant rename columns that dont exist. Column Time doesnt exist.
+agree_plot|stem|affbea5f0995b42b|7b048cb4fb344572|990492b52bf7518f|1050412964||t19885.5319142801s|c501bdd3cee75994|372417|rds|local|vector|||0.25||
+agree_plot_tiff|stem|fb2a8969341947bd|6ab6b28da21999fa|ecc3198e40044208|-733382628||t19885.531924226s|3ed5ce5eeeea6e9a|72|rds|local|vector|||0.85||
+data|stem|c6478ca41c8b93b2|1b3918a92eadf8e3|4c0255f583454d8a|33550471||t19885.4879945979s|16711c508292a858|1475|rds|local|vector|||0.56|Expected 3 pieces. Missing pieces filled with NA in 240 rows 7, 8, 9, 10,11, 12, 22, 23, 24, 25, 26, 27, 37, 38, 39, 40, 41, 42, 52, 53, ....|
+file_1|stem|de4c9c8270235f67|49351b464ea92dda|2c530c1562a7fbd1|1941241851|data/data_collection_s1.csv|t19794.4780925628s|393d4e5fe6fff450|1827|file|local|vector|||0.84||
+file_2|stem|c0958d0d96decd61|f99d5b612af61b75|2c530c1562a7fbd1|1821350206|data/data_collection_s2.csv|t19794.4784724806s|393d4e5fe6fff450|1827|file|local|vector|||0||
+fit_agree_model|function|53c57c76f62a441a|||||||||||||||
+fit_reli_models|function|56b89715d2c34314|||||||||||||||
+make_agree_plot|function|ed791add89928b67|||||||||||||||
+make_plot_tiff|function|ae5dc1809ded3893|||||||||||||||
+make_reli_plot|function|d3b7524def1f684e|||||||||||||||
+prepare_data|function|d51169f875734398|||||||||||||||
+reli_models|stem|bd152aedd3931d9a|db3483e13f2af312|84d1f3e851f6d615|-2038210276||t19885.5508509322s|003b188731e92d26|469|rds|local|vector|||0.09||
+reli_plot|stem|c18f65c3272e0367|208ec6dc2514549d|1f4739f509dcc31e|-2026709236||t19885.5578332836s|4a44a624ace1cfde|275151|rds|local|vector|||0.22||
+reli_plot_tiff|stem|93c5c39ad8950dd1|b937c642d1c498e5|32dc6a07d3465a99|1515940314||t19885.5578409754s|f50f9fb93e1c2938|71|rds|local|vector|||0.65||
+results_agree_model|function|db81beaf6006f15d|||||||||||||||

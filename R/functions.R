@@ -19,52 +19,53 @@ prepare_data <- function(file_1, file_2) {
 
 ##### Functions to fit agreement and reliability models
 fit_agree_model <- function(data) {
-  agree_model <-  data |>
-    mutate(
-      method = case_when(
-        method == "fdi" ~ "M1",
-        method == "jmc" ~ "M2",
-        method == "mj" ~ "M3",
-        method == "opto" ~ "M4"
-      ),
-      across(c(ID_num,method), factor)) |> 
-    lcc(
-      subject = "ID_num",
-      resp = "jump_height",
-      method = "method",
-      time = "session_no",
-      REML = TRUE,
-      ci = TRUE,
-      components = TRUE
+  
+  agree_models <- tibble(method = as.character(),
+                         Time = as.numeric(),
+                         Lower = as.numeric(),
+                         Upper = as.numeric(),
+                         Statistic = as.character(),
+                         Estimate = as.numeric())
+  
+  for(i in c("jmc", "mj", "opto")) {
+    
+    agree_model <-  data |>
+      filter(method == "fdi" | method == i) |>
+      mutate(
+        method = case_when(
+          method == "fdi" ~ "M1",
+          method == "jmc" ~ "M2",
+          method == "mj" ~ "M3",
+          method == "opto" ~ "M4"
+        ),
+        across(c(ID_num,method), factor)) |> 
+      lcc::lcc(
+        subject = "ID_num",
+        resp = "jump_height",
+        method = "method",
+        time = "session_no",
+        REML = TRUE,
+        ci = TRUE,
+        components = TRUE,
+        qr = 1
+      )
+    
+    agree_models <- bind_rows(agree_models,
+                              tibble(method = i,
+                                     unnest(tibble((agree_model$Summary.lcc$fitted)),
+                                            cols = c(`(agree_model$Summary.lcc$fitted)`)) |>
+                                       pivot_longer(c(LCC, LPC, LA),
+                                                    names_to = "Statistic",
+                                                    values_to = "Estimate",
+                                                    values_drop_na = TRUE))
     )
+  }
   
-  agree_model_all <- unnest(tibble((agree_model$Summary.lcc$fitted)),
-                            cols = c(`(agree_model$Summary.lcc$fitted)`))
+  agree_models <- agree_models |>
+    rename(session_no = "Time")
   
-  LCC <- unnest(agree_model_all[1:3,],
-                cols = c(`(agree_model$Summary.lcc$fitted)`)) |>
-    rename("session_no" = Time) |>
-    mutate(facet_lab = "Session Number",
-           Statistic = "LCC") |>
-    rename(Estimate = "LCC")
+  return(agree_models)
   
-  LPC <- unnest(agree_model_all[4:6,],
-                cols = c(`(agree_model$Summary.lcc$fitted)`)) |>
-    rename("session_no" = Time) |>
-    mutate(facet_lab = "Session Number",
-           Statistic = "LPC") |>
-    rename(Estimate = "LPC")
-  
-  LA <- unnest(agree_model_all[7:9,],
-               cols = c(`(agree_model$Summary.lcc$fitted)`)) |>
-    rename("session_no" = Time) |>
-    mutate(facet_lab = "Session Number",
-           Statistic = "LA") |>
-    rename(Estimate = "LA")
-  
-  agree_model_results <- bind_rows(LCC, LPC, LA)
-  
-  return(agree_model_results)
 }
 
 
@@ -93,9 +94,9 @@ fit_reli_models <- function(data) {
                                 CCC = reli_ccc$ccc[1],
                                 Lower = reli_ccc$ccc[2],
                                 Upper = reli_ccc$ccc[3],
-                                SEM = sqrt(nlme::intervals(reli_ccc$model)$sigma[2]),
-                                SEM_lower = sqrt(nlme::intervals(reli_ccc$model)$sigma[1]),
-                                SEM_upper = sqrt(nlme::intervals(reli_ccc$model)$sigma[3])))
+                                SEM = nlme::intervals(reli_ccc$model)$sigma[2],
+                                SEM_lower = nlme::intervals(reli_ccc$model)$sigma[1],
+                                SEM_upper = nlme::intervals(reli_ccc$model)$sigma[3]))
   }
   
   return(reli_models)
@@ -104,6 +105,10 @@ fit_reli_models <- function(data) {
 ##### Funtions for creating results plots
 
 make_agree_plot <- function(data, agree_model) {
+  
+  agree_model <- agree_model |>
+    mutate(facet_lab = "Session Number")
+  
   fdi_jmc_plot <- data |>
     pivot_wider(id_cols = c(ID_num, trial, session_no),
                 names_from = "method", 
@@ -162,108 +167,49 @@ make_agree_plot <- function(data, agree_model) {
     theme_bw() +
     theme(strip.text = element_blank())
   
-  fdi_opto_plot <- data |>
-    pivot_wider(id_cols = c(ID_num, trial, session_no),
-                names_from = "method", 
-                values_from = "jump_height") |>
-    select(fdi,opto,session_no) |>
-    ggplot(aes(x=fdi, y=opto)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[3:4,],
-              aes(label = glue::glue("rho[CCC] == {round(Estimate,2)}")),
-              x = 50,
-              y = 35,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 30,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[3:4,],
-              aes(label = glue::glue("rho == {round(Estimate,2)}")),
-              x = 50,
-              y = 25,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 20,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[3:4,],
-              aes(label = glue::glue("rho[C[b]] == {round(Estimate,2)}")),
-              x = 50,
-              y = 15,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 10,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Force Decks Impulse-Momentum (cm)",
-      y = "Optojump (cm)"
-    ) +
-    facet_grid(session_no~.) +
-    theme_bw() +
-    theme(strip.text = element_blank())
-  
   fdi_mj_plot <- data |>
     pivot_wider(id_cols = c(ID_num, trial, session_no),
                 names_from = "method", 
                 values_from = "jump_height") |>
     select(fdi,mj,session_no) |>
-    mutate(facet_lab = "Session Number") |>
     ggplot(aes(x=fdi, y=mj)) +
     geom_point() +
     geom_abline(intercept = 0, slope = 1,
                 linetype = "dashed") +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[5:6,],
+    geom_text(data = filter(agree_model, Statistic == "LCC")[3:4,],
               aes(label = glue::glue("rho[CCC] == {round(Estimate,2)}")),
               x = 50,
               y = 35,
               size = 3,
               parse = TRUE
     ) +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[5:6,],
+    geom_text(data = filter(agree_model, Statistic == "LCC")[3:4,],
               aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 30,
               size = 3
     ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[5:6,],
+    geom_text(data = filter(agree_model, Statistic == "LPC")[3:4,],
               aes(label = glue::glue("rho == {round(Estimate,2)}")),
               x = 50,
               y = 25,
               size = 3,
               parse = TRUE
     ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[5:6,],
+    geom_text(data = filter(agree_model, Statistic == "LPC")[3:4,],
               aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 20,
               size = 3
     ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[5:6,],
+    geom_text(data = filter(agree_model, Statistic == "LA")[3:4,],
               aes(label = glue::glue("rho[C[b]] == {round(Estimate,2)}")),
               x = 50,
               y = 15,
               size = 3,
               parse = TRUE
     ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[5:6,],
+    geom_text(data = filter(agree_model, Statistic == "LA")[3:4,],
               aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
               x = 50,
               y = 10,
@@ -275,13 +221,72 @@ make_agree_plot <- function(data, agree_model) {
       x = "Force Decks Impulse-Momentum (cm)",
       y = "MyJump App (cm)"
     ) +
+    facet_grid(session_no~.) +
+    theme_bw() +
+    theme(strip.text = element_blank())
+  
+  fdi_opto_plot <- data |>
+    pivot_wider(id_cols = c(ID_num, trial, session_no),
+                names_from = "method", 
+                values_from = "jump_height") |>
+    select(fdi,opto,session_no) |>
+    mutate(facet_lab = "Session Number") |>
+    ggplot(aes(x=fdi, y=opto)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1,
+                linetype = "dashed") +
+    geom_text(data = filter(agree_model, Statistic == "LCC")[5:6,],
+              aes(label = glue::glue("rho[CCC] == {round(Estimate,2)}")),
+              x = 50,
+              y = 35,
+              size = 3,
+              parse = TRUE
+    ) +
+    geom_text(data = filter(agree_model, Statistic == "LCC")[5:6,],
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
+              x = 50,
+              y = 30,
+              size = 3
+    ) +
+    geom_text(data = filter(agree_model, Statistic == "LPC")[5:6,],
+              aes(label = glue::glue("rho == {round(Estimate,2)}")),
+              x = 50,
+              y = 25,
+              size = 3,
+              parse = TRUE
+    ) +
+    geom_text(data = filter(agree_model, Statistic == "LPC")[5:6,],
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
+              x = 50,
+              y = 20,
+              size = 3
+    ) +
+    geom_text(data = filter(agree_model, Statistic == "LA")[5:6,],
+              aes(label = glue::glue("rho[C[b]] == {round(Estimate,2)}")),
+              x = 50,
+              y = 15,
+              size = 3,
+              parse = TRUE
+    ) +
+    geom_text(data = filter(agree_model, Statistic == "LA")[5:6,],
+              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
+              x = 50,
+              y = 10,
+              size = 3
+    ) +
+    scale_x_continuous(limits = c(10,60)) +
+    scale_y_continuous(limits = c(10,60)) +
+    labs(
+      x = "Force Decks Impulse-Momentum (cm)",
+      y = "Optojump (cm)"
+    ) +
     ggh4x::facet_nested(facet_lab + session_no~.) +
     theme_bw() +
     theme(strip.background = element_blank(),
           strip.text = element_text(size = 12))
   
   
-  fdi_jmc_plot + fdi_opto_plot + fdi_mj_plot +
+  (fdi_jmc_plot + fdi_mj_plot + fdi_opto_plot) +
     plot_layout(axes = "collect") +
     plot_annotation(title = "Agreement Between Methods",
                     subtitle = expression(paste("Concordance Correlation Coefficients (", rho[CCC], "), Pearson's Correlation (", rho, "), and Bias Correction (", rho[C[b]], ") with Interval Estimates")),

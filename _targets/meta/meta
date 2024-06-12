@@ -1,18 +1,18 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-agree_model|stem|9d2ad7ff2881eaa1|52cda8bccea36fb1|483bc89ab7eae46e|-186591880||t19885.519531938s|a70e3cfa7c565d07|575|rds|local|vector|||121.98||
+agree_model|stem|ce778ddc2667115d|52cda8bccea36fb1|bd3d05cc329bc20e|-186591880||t19886.5191305246s|2f61aad5ce5de221|703|rds|local|vector|||511.93||
 agree_model_results|stem|d1e88ede9ea488f1|b3e3cfbb9a687cc7|c25777b31ae6235e|1252300494||t19885.4984544346s||356|rds|local|vector|||0.06||Cant rename columns that dont exist. Column Time doesnt exist.
-agree_plot|stem|affbea5f0995b42b|7b048cb4fb344572|990492b52bf7518f|1050412964||t19885.5319142801s|c501bdd3cee75994|372417|rds|local|vector|||0.25||
-agree_plot_tiff|stem|fb2a8969341947bd|6ab6b28da21999fa|ecc3198e40044208|-733382628||t19885.531924226s|3ed5ce5eeeea6e9a|72|rds|local|vector|||0.85||
+agree_plot|stem|1aacc57d98e595b6|7b048cb4fb344572|1b5b046e32fd23b2|1050412964||t19886.5275894956s|d9017565616370a1|372741|rds|local|vector|||0.25||
+agree_plot_tiff|stem|fb2a8969341947bd|6ab6b28da21999fa|861b2a1ed42a5b13|-733382628||t19886.5275985283s|3ed5ce5eeeea6e9a|72|rds|local|vector|||0.77||
 data|stem|c6478ca41c8b93b2|1b3918a92eadf8e3|4c0255f583454d8a|33550471||t19885.4879945979s|16711c508292a858|1475|rds|local|vector|||0.56|Expected 3 pieces. Missing pieces filled with NA in 240 rows 7, 8, 9, 10,11, 12, 22, 23, 24, 25, 26, 27, 37, 38, 39, 40, 41, 42, 52, 53, ....|
 file_1|stem|de4c9c8270235f67|49351b464ea92dda|2c530c1562a7fbd1|1941241851|data/data_collection_s1.csv|t19794.4780925628s|393d4e5fe6fff450|1827|file|local|vector|||0.84||
 file_2|stem|c0958d0d96decd61|f99d5b612af61b75|2c530c1562a7fbd1|1821350206|data/data_collection_s2.csv|t19794.4784724806s|393d4e5fe6fff450|1827|file|local|vector|||0||
-fit_agree_model|function|53c57c76f62a441a|||||||||||||||
-fit_reli_models|function|56b89715d2c34314|||||||||||||||
-make_agree_plot|function|ed791add89928b67|||||||||||||||
+fit_agree_model|function|e44731f48f473953|||||||||||||||
+fit_reli_models|function|f484d01f2b216716|||||||||||||||
+make_agree_plot|function|545f4cced8ce6691|||||||||||||||
 make_plot_tiff|function|ae5dc1809ded3893|||||||||||||||
 make_reli_plot|function|d3b7524def1f684e|||||||||||||||
 prepare_data|function|d51169f875734398|||||||||||||||
-reli_models|stem|bd152aedd3931d9a|db3483e13f2af312|84d1f3e851f6d615|-2038210276||t19885.5508509322s|003b188731e92d26|469|rds|local|vector|||0.09||
-reli_plot|stem|c18f65c3272e0367|208ec6dc2514549d|1f4739f509dcc31e|-2026709236||t19885.5578332836s|4a44a624ace1cfde|275151|rds|local|vector|||0.22||
-reli_plot_tiff|stem|93c5c39ad8950dd1|b937c642d1c498e5|32dc6a07d3465a99|1515940314||t19885.5578409754s|f50f9fb93e1c2938|71|rds|local|vector|||0.65||
+reli_models|stem|5df40fdff5d3f704|db3483e13f2af312|ef1b50ec325db142|-2038210276||t19886.5103193822s|e39fb01a11881970|468|rds|local|vector|||0.08||
+reli_plot|stem|79ecc530daa31a62|208ec6dc2514549d|5eb08d1c9dd3a2d2|-2026709236||t19886.5103278433s|bf658f9899866344|275158|rds|local|vector|||0.19||
+reli_plot_tiff|stem|93c5c39ad8950dd1|b937c642d1c498e5|c88a0d80930c730e|1515940314||t19886.5103449106s|f50f9fb93e1c2938|71|rds|local|vector|||0.5||
 results_agree_model|function|db81beaf6006f15d|||||||||||||||

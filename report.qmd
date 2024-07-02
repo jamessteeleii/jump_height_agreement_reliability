@@ -8,11 +8,10 @@ format:
     prefer-html: true
 bibliography: 
   references.bib
-  grateful-refs.bib
 csl: apa.csl
 ---
 
-```{r} 
+```{r}
 #| message: false
 #| warning: false
 #| echo: false
@@ -22,9 +21,6 @@ csl: apa.csl
 knitr::opts_chunk$set(echo = TRUE, fig.align="center")
 options(knitr.kable.NA = '')
 
-library(tidyverse)
-library(kableExtra)
-library(ggtext)
 library(patchwork)
 library(grateful)
 
@@ -32,368 +28,106 @@ library(grateful)
 
 # Statistical Analysis
 
-The present analysis was not pre-registered as we had no a priori hypotheses and, given the limited sample size due to resource constraints, thus was considered exploratory. Inferential statistics were treated as highly unstable local descriptions of the relations between model assumptions and data in order to acknowledge the inherent uncertainty in drawing generalised inferences from single and small samples [@amrhein_inferential_2019]. For all analyses we opted to take an estimation-based approach typical when examining validity and reliability. Two sets of models were employed exploring the JHs recorded from CMJ trials; one to examine the agreement between the IM method using the Force Decks (i.e., gold-standard) and each of the other methods, and one to explore the test-retest reliability for each method. 
+The present analysis was not pre-registered as we had no a priori hypotheses and, given the limited sample size due to resource constraints, was considered exploratory. Inferential statistics were treated as highly unstable local descriptions of the relations between model assumptions and data in order to acknowledge the inherent uncertainty in drawing generalised inferences from single and small samples [@amrheinInferentialStatisticsDescriptive2019]. For all analyses we opted to take an estimation-based approach typical when examining validity and reliability. That is, we provide point estimates and the uncertainty in them for the statistical parameters reported. Two sets of models were employed exploring the JHs recorded from CMJ trials; one to examine the agreement between the IM method using the Force Decks (i.e., gold-standard) and each of the other methods, and one to explore the test-retest reliability for each method. Given we had nested data whereby each participant provided three trials for each method on two separate testing sessions we adopted a mixed effects limits of agreement approach [@parkerUsingMultipleAgreement2020]. This allowed us to estimate mean bias for each method compared with the gold-standard for agreement utilising both first and second session data, and any test retest bias for reliability, in addition to to upper and lower limits of agreement providing 95% coverage probabilities for both agreement and test-retest reliability. Models were fit using the `lme4` package and using Restricted Maximum Likelihood Estimation. For each of the models fit we used nonparametric case based bootstrapping resampling 10000 times at the individual participant level and refitting models in order to construct 95% quantile intervals for both the mean bias and limits of agreement estimates. Bootstrapping was performed using the `lmeresampler` package.
 
-All data and code is presented in the supplementary materials (https://osf.io/e7qg5/).
+## Agreement
+For estimation of bias and limits of agreement regarding the agreement between the gold-standard and each device we utilised the following mixed effects model structure:
+
+$$
+\begin{aligned}
+  D_{ist} &= \mu + \alpha_i + \gamma_s + \epsilon_{ist} \\ 
+  \alpha_{i}  &\sim N (0, \sigma^2_{\alpha}) \\
+    \gamma_{s}  &\sim N (0, \sigma^2_{\gamma}) \\
+      \epsilon_{ist}  &\sim N (0, \sigma^2_{\epsilon})
+\end{aligned}
+$$ 
+
+Where $D_{ist}$ is the difference between measurements taken between the two devices (i.e., $y_{ist2}-y_{ist1}$), where the device indexed by $1$ is the gold-standard and device indexed by $2$ is the comparison device, for participant $i$ during session $s$ and for trial $t$. Here $\mu$ is the overall mean of the between device differences (i.e., the mean bias), $\alpha_i$ is the random effect for the $i^{th}$ participant,$\gamma_s$ is the random effect for the $s^{th}$ session which is nested within participant, and $\epsilon_{ist}$ is the error term. The 95% limits of agreement can then be calculated as:
+
+$$
+\begin{aligned}
+  \mu \pm 1.96\sqrt{\sigma^2_{\alpha}+\sigma^2_{\gamma}+\sigma^2_{\epsilon}}
+\end{aligned}
+$$ 
+with the square root of the total variance providing an estimate of the standard deviation of the differences for use in the conventional Bland-Altman limits of agreement calculation. A model was fit for each device in comparison o the gold-standard.
+
+## Reliability
+For estimation of bias and limits of agreement regarding the test-retest reliability between each test session for each device we utilised the following mixed effects model structure:
+
+$$
+\begin{aligned}
+  D^*_{it} &= \mu^* + \alpha^*_i + \epsilon^*_{it} \\ 
+  \alpha^*_{i}  &\sim N (0, \sigma^2_{\alpha^*}) \\
+      \epsilon^*_{it}  &\sim N (0, \sigma^2_{\epsilon^*})
+\end{aligned}
+$$ 
+
+Where $D_{it}$ is the difference between measurements taken between the two sessions for a given device (i.e., $y_{it2}-y_{it1}$), where the session indexed by $1$ is the first test session and the session indexed by $2$ is the second test session, for participant $i$ and for trial $t$ (note we use the superscript $*$ to distinguish this from the agreement model. Here $\mu^*$ is the overall mean of the between session differences (i.e., the mean bias), $\alpha^*_i$ is the random effect for the $i^{th}$ participant, and $\epsilon^*_{it}$ is the error term. The 95% limits of agreement can then be calculated as:
+
+$$
+\begin{aligned}
+  \mu^* \pm 1.96\sqrt{\sigma^2_{\alpha^*}+\sigma^2_{\epsilon^*}}
+\end{aligned}
+$$ 
+with the square root of the total variance providing an estimate of the standard deviation of the differences for use in the conventional Bland-Altman limits of agreement calculation. A model was fit for each device in order to examine its test-retest reliability.
+
+## Open data, code, and materials
+All data and code is presented in the supplementary materials (https://osf.io/e7qg5/).  The `renv` package was used for package version reproducibility and a function based analysis pipeline using the `targets` package was employed (the analysis pipeline can be viewed by downloading the R Project and running the function `targets::tar_visnetwork()`). We cite all packages used in the analysis pipeline below.
+
 ```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
 cite_packages(output = "paragraph", out.dir = ".")
 ```
 
-## Agreement
-We explored the agreement between the gold-standard and other methods examined using the Concordance Correlation Coefficient 
-
-ADD - https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/s12874-020-01022-x 
-
 # Results
-```{r} 
-#| message: false
-#| warning: false
-#| echo: false
-
-targets::tar_load(tidy_disability_velocity_model)
-targets::tar_load(tidy_classif_velocity_model)
-targets::tar_load(tidy_disability_acceleration_model)
-targets::tar_load(tidy_classif_acceleration_model)
-
-disability_tab <- left_join(tidy_disability_velocity_model, tidy_disability_acceleration_model,
-                          by = c("effect", "term")) %>%
-  select(term, estimate.x, conf.low.x, conf.high.x, estimate.y, conf.low.y, conf.high.y)
-
-classif_tab <- left_join(tidy_classif_velocity_model, tidy_classif_acceleration_model,
-                            by = c("effect", "term")) %>%
-  select(term, estimate.x, conf.low.x, conf.high.x, estimate.y, conf.low.y, conf.high.y)
-
-
-tidy_model_sprint <- rbind(disability_tab, classif_tab) %>%
-  mutate_if(is.numeric, round, 2)
-
-
-tidy_model_sprint$term <- recode(tidy_model_sprint$term,
-                              "(Intercept)" = "Intercept",
-                              "disabilitySCI" = "$Disability_{SCI}$",
-                              "distance5M10m" = "$Distance_{5-10m}$",
-                              "distance10M15m" = "$Distance_{10-15m}$",
-                              "distance15M20m" = "$Distance_{15-20m}$",
-                              "disabilitySCI:distance5M10m" = "$Disability_{SCI}$:$Distance_{5-10m}$",
-                              "disabilitySCI:distance10M15m" = "$Disability_{SCI}$:$Distance_{10-15m}$",
-                              "disabilitySCI:distance15M20m" = "$Disability_{SCI}$:$Distance_{15-20m}$",
-                              "sd__(Intercept)" = "$\\sigma_{Intercept}$",  
-                              "sd__distance5M10m" = "$\\sigma_{distance5M10m}$",
-                              "sd__distance10M15m" = "$\\sigma_{distance10M15m}$",
-                              "sd__distance15M20m" = "$\\sigma_{distance15M20m}$",
-                              "cor__(Intercept).distance5M10m" = "$\\rho_{Intercept:Distance_{5-10m}}$",
-                              "cor__(Intercept).distance10M15m" = "$\\rho_{Intercept:Distance_{10-15m}}$",
-                              "cor__(Intercept).distance15M20m" = "$\\rho_{Intercept:Distance_{15-20m}}$",
-                              "cor__distance5M10m.distance10M15m" = "$\\rho_{Distance_{5-10m}:Distance_{10-15m}}$",
-                              "cor__distance5M10m.distance15M20m" = "$\\rho_{Distance_{5-10m}:Distance_{15-20m}}$",
-                              "cor__distance10M15m.distance15M20m" = "$\\rho_{Distance_{10-15m}:Distance_{15-20m}}$",
-                              "sd__Observation" = "$\\sigma_{Residual}$",
-                              
-                              "classif5" = "$Classification_{5}$",
-                              "classif5:distance5M10m" = "$Classification_{5}$:$Distance_{5-10m}$",
-                              "classif5:distance10M15m" = "$Classification_{5}$:$Distance_{10-15m}$",
-                              "classif5:distance15M20m" = "$Classification_{5}$:$Distance_{15-20m}$"
-                              )
-
-tidy_model_sprint <- tidy_model_sprint[c(1:14,16,15,17:33,35,35,36:38),]
-```
-
-```{r} 
-#| message: false
-#| warning: false
-#| echo: false
-
-targets::tar_load(tidy_disability_rsa_model)
-targets::tar_load(tidy_classif_rsa_model)
-
-tidy_model_rsa <- rbind(tidy_disability_rsa_model,
-                         tidy_classif_rsa_model) %>%
-  select(term, estimate, conf.low, conf.high)  %>%
-  mutate_if(is.numeric, round, 2)
-
-
-tidy_model_rsa$term <- recode(tidy_model_rsa$term,
-                              "(Intercept)" = "Intercept",
-                              "disabilitySCI" = "$Disability_{SCI}$",
-                              "sprint_number" = "Sprint Number",
-                              "distance5M10m" = "$Distance_{5-10m}$",
-                              "distance10M15m" = "$Distance_{10-15m}$",
-                              "distance15M20m" = "$Distance_{15-20m}$",
-                              "disabilitySCI:sprint_number" = "$Disability_{SCI}$:Sprint Number",
-                              "disabilitySCI:distance5M10m" = "$Disability_{SCI}$:$Distance_{5-10m}$",
-                              "disabilitySCI:distance10M15m" = "$Disability_{SCI}$:$Distance_{10-15m}$",
-                              "disabilitySCI:distance15M20m" = "$Disability_{SCI}$:$Distance_{15-20m}$",
-                              "sprint_number:distance5M10m" = "Sprint Number:$Distance_{5-10m}$",
-                              "sprint_number:distance10M15m" = "Sprint Number:$Distance_{10-15m}$",
-                              "sprint_number:distance15M20m" = "Sprint Number:$Distance_{15-20m}$",
-                              "disabilitySCI:sprint_number:distance5M10m" = "$Disability_{SCI}$:Sprint Number:$Distance_{5-10m}$",
-                              "disabilitySCI:sprint_number:distance10M15m" = "$Disability_{SCI}$:Sprint Number:$Distance_{10-15m}$",
-                              "disabilitySCI:sprint_number:distance15M20m" = "$Disability_{SCI}$:Sprint Number:$Distance_{15-20m}$",
-                              
-                              "sd__(Intercept)" = "$\\sigma_{Intercept}$",  
-                              "sd__sprint_number" = "$\\sigma_{Sprint Number}$",
-                              "sd__distance5M10m" = "$\\sigma_{distance5M10m}$",
-                              "sd__distance10M15m" = "$\\sigma_{distance10M15m}$",
-                              "sd__distance15M20m" = "$\\sigma_{distance15M20m}$",
-                              
-                              "cor__(Intercept).sprint_number" = "$\\rho_{Intercept:Sprint Number}$",
-                              "cor__(Intercept).distance5M10m" = "$\\rho_{Intercept:Distance_{5-10m}}$",
-                              "cor__(Intercept).distance10M15m" = "$\\rho_{Intercept:Distance_{10-15m}}$",
-                              "cor__(Intercept).distance15M20m" = "$\\rho_{Intercept:Distance_{15-20m}}$",
-                              
-                              "cor__sprint_number.distance10M15m" = "$\\rho_{Sprint Number:Distance_{10-15m}}$",
-                              "cor__sprint_number.distance5M10m" = "$\\rho_{Sprint Number:Distance_{5-10m}}$",
-                              "cor__sprint_number.distance15M20m" = "$\\rho_{Sprint Number:Distance_{15-20m}}$",
-                              
-                              
-                              "cor__distance5M10m.distance10M15m" = "$\\rho_{Distance_{5-10m}:Distance_{10-15m}}$",
-                              "cor__distance5M10m.distance15M20m" = "$\\rho_{Distance_{5-10m}:Distance_{15-20m}}$",
-                              "cor__distance10M15m.distance15M20m" = "$\\rho_{Distance_{10-15m}:Distance_{15-20m}}$",
-                              "sd__Observation" = "$\\sigma_{Residual}$",
-                              
-                              "classif5" = "$Classification_{5}$",
-                              "classif5:sprint_number" = "$Classification_{5}$:Sprint Number",
-                              "classif5:distance5M10m" = "$Classification_{5}$:$Distance_{5-10m}$",
-                              "classif5:distance10M15m" = "$Classification_{5}$:$Distance_{10-15m}$",
-                              "classif5:distance15M20m" = "$Classification_{5}$:$Distance_{15-20m}$",
-                              "classif5:sprint_number:distance5M10m" = "$Classification_{5}$:Sprint Number:$Distance_{5-10m}$",
-                              "classif5:sprint_number:distance10M15m" = "$Classification_{5}$:Sprint Number:$Distance_{10-15m}$",
-                              "classif5:sprint_number:distance15M20m" = "$Classification_{5}$:Sprint Number:$Distance_{15-20m}$",
-                              
-                              )
-
-tidy_model_rsa <- tidy_model_rsa[c(1:21,22,23,25,28,24,26,29,27,30:55,57,60,56,58,61,59,62:64),]
-```
-
-```{r} 
-#| message: false
-#| warning: false
-#| echo: false
-
-targets::tar_load(tidy_disability_lactate_model)
-targets::tar_load(tidy_classif_lactate_model)
-
-tidy_model_lactate <- rbind(tidy_disability_lactate_model,
-                         tidy_classif_lactate_model) %>%
-  select(term, estimate, conf.low, conf.high)  %>%
-  mutate_if(is.numeric, round, 2)
-
-
-tidy_model_lactate$term <- recode(tidy_model_lactate$term,
-                              "(Intercept)" = "Intercept",
-                              "disabilitySCI" = "$Disability_{SCI}$",
-                              "time" = "Time",
-                              "disabilitySCI:time" = "$Disability_{SCI}$:Time",
-                              
-                              "sd__(Intercept)" = "$\\sigma_{Intercept}$",  
-                              "sd__Observation" = "$\\sigma_{Residual}$",
-                              
-                              "class5" = "$Classification_{5}$",
-                              "class5:time" = "$classication_{5}$:Time"
-                              )
-
-```
-
-## Sprint trial outcomes
-
-The overall grand means and credible intervals from the models for the fixed effects (i.e., without including the random effects) for both velocity and acceleration can be seen in @fig-velocity-model-plot and @fig-acceleration-model-plot, in addition to individual data, respectively for both disability and classification models. All parameters for both outcomes and both disability and classification models are also shown in @tbl-sprint-model. As might be expected, fixed effects in both models revealed that velocity increased as distance covered increased and the reverse pattern for acceleration which decreased as distance covered increased. Random effects in both models showed that variation in velocities increased with increasing distance covered, and also the random effects correlations suggested that those who were initially faster, or faster during certain sections of the sprint, were similarly typically faster at all other distances. Variance in acceleration was more similar over increasing distance covered as compared with velocity, and also the random effects correlations suggested that those who had initially higher acceleration showed greater declines in acceleration across all distances, though between adjacent distances there were more positive relationships. 
-
-### Disability
-SCI participants showed slower velocities across all distances. There was however little interaction effect between disability and distance upon velocity. SCI participants also had lower acceleration across all distances. However, there were interactions between disability and distance whereby although over the initial 0-5m distance SCI participants had lower accelerations, the difference between them and participants with other injuries decreased as distance covered increased. During the final 10-15 and 15-20m accelerations were similar between groups. 
-
-### Classification
-Both 4s and 5s showed similar velocities across all distances, as well as accelerations. There was little effect of classification upon either velocity or acceleration.  
-
-```{r} 
-#| message: false
-#| warning: false
-#| echo: false
-#| label: tbl-sprint-model 
-#| tbl-cap-location: "top"
-#| tbl-cap: Model parameter estimates for both fixed and random effects for sprint trial outcomes (velocity and acceleration).
-
-
-knitr::kable(
-  tidy_model_sprint,
-  align = c("l","c","c","c","c","c","c"),
-  col.names = c("Model Term",
-                "Estimate",
-                "Lower 95% CI",
-                "Upper 95% CI",
-                "Estimate",
-                "Lower 95% CI",
-                "Upper 95% CI"
-                )
-) %>%
-  footnote(general = c("CI = credible interval")
-           ) %>%
-  row_spec(0, bold = TRUE) %>%
-  kable_classic(full_width = FALSE) %>%
-  add_header_above(c(" ", "Velocity $\\\\(m\U00B7s^{-1})$" = 3, "Acceleration $\\\\(m\U00B7s^{-2})$" = 3), 
-                   escape = FALSE) %>%
-  pack_rows("Disability Model", 1,19) %>%
-  pack_rows("Fixed Effects", 1,8, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Random Effects", 9,19, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Classification Model", 20,38) %>%
-  pack_rows("Fixed Effects", 20,27, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Random Effects", 28,38, italic = TRUE, bold = FALSE) %>%
-  kableExtra::kable_styling()
-
-```
-
-
 
 ```{r}
 #| message: false
 #| warning: false
 #| echo: false
-#| label: fig-velocity-model-plot 
-#| fig-width: 15
-#| fig-height: 7.5
-#| fig-cap: Individual data (top row) and global grand means with distribution and 95% credible interval estimates from the expectation of the posterior predictive distribution (bottom row) for velocity by both disability, panels (A) and (B), and classification, panels (C) and (D).
 
-targets::tar_load(combined_velocity_plot)
+targets::tar_load(agree_models)
+targets::tar_load(reli_models)
+targets::tar_load(agree_plot)
+targets::tar_load(reli_plot)
 
-combined_velocity_plot
-
-```
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-#| label: fig-acceleration-model-plot 
-#| fig-width: 15
-#| fig-height: 7.5
-#| fig-cap: Individual data (top row) and global grand means with distribution and 95% credible interval estimates from the expectation of the posterior predictive distribution (bottom row) for acceleration by both disability, panels (A) and (B), and classification, panels (C) and (D).
-
-targets::tar_load(combined_acceleration_plot)
-
-combined_acceleration_plot
 
 ```
 
-## Repeated sprint trial outcomes
+## Agreement
 
-### Sprint times
-
-The overall grand means and credible intervals from the models for the fixed effects (i.e., without including the random effects) for repeated sprint times can be seen in @fig-rsa-model-plot and @fig-acceleration-model-plot, in addition to individual data and participant level linear smooths, respectively for both disability and classification models. All parameters for both outcomes and both disability and classification models are also shown in @tbl-rsa-model.
-
-On average, fixed effects in both models revealed that sprint number had little impact on time, however did interact with distance revealing greater increases in time for later sprints over increasing distances. Sprint number had little impact upon the initial 0-5m. Of course, trivially, time increased as distance covered increased. Random effects in both models showed, similarly to velocity in the sprint trials, that variation in times increased with increasing distance covered. Also the random effects correlations suggested that those who were initially faster at the beginning of a sprint, faster during certain sections of the sprint, or faster during a given sprint number, were similarly typically faster at all other distances and during all other sprint numbers. 
-
-#### Disability
-Both SCI and other disabilities showed similar performances in the repeated sprints, across all distances, and all sprint numbers. There was little effect of disability upon either repeated sprint times.
-
-#### Classification
-Both 4s and 5s showed similar performances in the repeated sprints, across all distances, and all sprint numbers. There was little effect of classification upon either repeated sprint times.
-
-```{r} 
-#| message: false
-#| warning: false
-#| echo: false
-#| label: tbl-rsa-model 
-#| tbl-cap-location: "top"
-#| tbl-cap: Model parameter estimates for both fixed and random effects for repeated sprint trial times.
-
-
-knitr::kable(
-  tidy_model_rsa,
-  align = c("l","c","c","c"),
-  col.names = c("Model Term",
-                "Estimate",
-                "Lower 95% CI",
-                "Upper 95% CI"
-              )
-) %>%
-  footnote(general = c("CI = credible interval")
-           ) %>%
-  row_spec(0, bold = TRUE) %>%
-  kable_classic(full_width = FALSE) %>%
-  add_header_above(c(" ", "Time (seconds)" = 3), 
-                   escape = FALSE) %>%
-  pack_rows("Disability Model", 1,32) %>%
-  pack_rows("Fixed Effects", 1,16, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Random Effects", 17,32, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Classification Model", 33,64) %>%
-  pack_rows("Fixed Effects", 33,48, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Random Effects", 49,64, italic = TRUE, bold = FALSE) %>%
-  kableExtra::kable_styling()
-
-```
-
-
+The exact mean bias and limits of agreement along with their bootstrapped interval estimates can be seen for the agreement of each device in comparison to the gold-standard (impulse momentum method using the Force Decks) in @fig-agree-plot. Both the MyJump App and the Optojump demonstrated very similar degrees of mean bias of around ~2 cm overestimation, and a similar width to their limits of agreement ranging ~11-12 cm about the mean bias. The Jump Mat however had a much larger mean bias of ~10 cm overestimation yet a similar range for their limits of agreement as the other devices.
 
 ```{r}
 #| message: false
 #| warning: false
 #| echo: false
-#| label: fig-rsa-model-plot 
-#| fig-width: 15
+#| label: fig-agree-plot 
+#| fig-width: 12.5
 #| fig-height: 7.5
-#| fig-cap: Individual data with linear smooths by participant (top row) and global grand means with distribution and 95% credible interval estimates from the expectation of the posterior predictive distribution (bottom row) for repeated sprint times by both disability, panels (A) and (B), and classification, panels (C) and (D).
+#| fig-cap: Mean bias (thick horizontal line) and 95% limits of agreement (dotted horizontal lines) along with 95% quantile interval estimates for agreement of each device in comparison to the gold-standard (Force Decks impulse-momentum method).
 
-targets::tar_load(combined_rsa_plot)
-
-combined_rsa_plot
+agree_plot
 
 ```
 
-### Blood lactate
-The overall grand means and credible intervals from the models for the fixed effects (i.e., without including the random effects) for blood lactate can be seen in @fig-lactate-model-plot in addition to individual data, respectively for both disability and classification models. All parameters for both outcomes and both disability and classification models are also shown in @tbl-lactate-model. As might be expected, fixed effects in both models revealed that blood lactate increased as from pre- to post-repeated sprint trials (see $Time$ terms in @tbl-lactate-model). Random intercepts also showed some variation in baseline blood lactate levels. 
+## Reliability
 
-### Disability
-There was little difference in average blood lactate levels between those with SCI or other disabilities, nor was there a clear interaction effect suggesting both groups increased in blood lactate similarly. 
-
-### Classification
-Both 4s and 5s showed similar average blood lactate levels too. However, the posterior estimates were suggestive of an interaction effect little effect of classification upon either velocity or acceleration whereby 5s tended to show a greater increase in blood lactate levels post-repeated sprint trials.  
-
-```{r} 
-#| message: false
-#| warning: false
-#| echo: false
-#| label: tbl-lactate-model 
-#| tbl-cap-location: "top"
-#| tbl-cap: Model parameter estimates for both fixed and random effects for blood lactate pre- and post-repeated sprint trials.
-
-
-knitr::kable(
-  tidy_model_lactate,
-  align = c("l","c","c","c"),
-  col.names = c("Model Term",
-                "Estimate",
-                "Lower 95% CI",
-                "Upper 95% CI"
-              )
-) %>%
-  footnote(general = c("CI = credible interval")
-           ) %>%
-  row_spec(0, bold = TRUE) %>%
-  kable_classic(full_width = FALSE) %>%
-  add_header_above(c(" ", "Blood lactate ($\\\\(m\U00B7L^{-1})$)" = 3), 
-                   escape = FALSE) %>%
-  pack_rows("Disability Model", 1,6) %>%
-  pack_rows("Fixed Effects", 1,4, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Random Effects", 5,6, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Classification Model", 7,12) %>%
-  pack_rows("Fixed Effects", 7,9, italic = TRUE, bold = FALSE) %>%
-  pack_rows("Random Effects", 11,12, italic = TRUE, bold = FALSE) %>%
-  kableExtra::kable_styling()
-
-```
-
-
+The exact mean bias and limits of agreement along with their bootstrapped interval estimates can be seen for the test-retest reliability of each device between sessions in @fig-agree-plot. All devices demonstrated minimal mean bias between sessions each typically less than 1 cm, and all demonstrated a similar width to their limits of agreement ranging ~10 cm about the mean bias. 
 
 ```{r}
 #| message: false
 #| warning: false
 #| echo: false
-#| label: fig-lactate-model-plot 
-#| fig-width: 15
-#| fig-height: 7.5
-#| fig-cap: Individual data with linear smooths by participant (top row) and global grand means with distribution and 95% credible interval estimates from the expectation of the posterior predictive distribution (bottom row) for repeated sprint times by both disability, panels (A) and (B), and classification, panels (C) and (D).
+#| label: fig-reli-plot 
+#| fig-width: 10
+#| fig-height: 10
+#| fig-cap: Mean bias (thick horizontal line) and 95% limits of agreement (dotted horizontal lines) along with 95% quantile interval estimates for each the test-retest reliability of device between sessions.
 
-targets::tar_load(combined_lactate_plot)
-
-combined_lactate_plot
+reli_plot
 
 ```
 

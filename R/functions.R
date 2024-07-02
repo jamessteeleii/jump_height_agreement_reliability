@@ -18,51 +18,77 @@ prepare_data <- function(file_1, file_2) {
 }
 
 ##### Functions to fit agreement and reliability models
-fit_agree_model <- function(data) {
+fit_agree_models <- function(data) {
   
   agree_models <- tibble(method = as.character(),
-                         Time = as.numeric(),
-                         Lower = as.numeric(),
-                         Upper = as.numeric(),
-                         Statistic = as.character(),
-                         Estimate = as.numeric())
+                         mean_bias = as.numeric(),
+                         lower_ci_mean = as.numeric(), 
+                         upper_ci_mean = as.numeric(), 
+                         lower_ci_l_loa = as.numeric(), 
+                         upper_ci_l_loa = as.numeric(),
+                         lower_ci_u_loa = as.numeric(),
+                         upper_ci_u_loa = as.numeric(),
+                         l_loa = as.numeric(),
+                         u_loa = as.numeric())
+  
+  set.seed(1988)
   
   for(i in c("jmc", "mj", "opto")) {
     
-    agree_model <-  data |>
+    data_wide <- data |>
       filter(method == "fdi" | method == i) |>
+      mutate(method = case_when(
+        method == "fdi" ~ "M1",
+        method == "jmc" ~ "M2",
+        method == "mj" ~ "M2",
+        method == "opto" ~ "M2"
+      )) |>
+      pivot_wider(id_cols = c(ID_num,session_no,trial),
+                  names_from = "method",
+                  values_from = "jump_height") |>
       mutate(
-        method = case_when(
-          method == "fdi" ~ "M1",
-          method == "jmc" ~ "M2",
-          method == "mj" ~ "M3",
-          method == "opto" ~ "M4"
-        ),
-        across(c(ID_num,method), factor)) |> 
-      lcc::lcc(
-        subject = "ID_num",
-        resp = "jump_height",
-        method = "method",
-        time = "session_no",
-        REML = TRUE,
-        ci = TRUE,
-        components = TRUE,
-        qr = 1
+        mean = (M2 + M1)/2,
+        diff = M2 - M1
+      )
+    
+    lmer_diff <- lmer(diff ~ (1|ID_num/session_no),
+                      data = data_wide,
+                      REML = TRUE)
+    
+    totalsd <- sqrt(as.numeric(summary(lmer_diff)$varcor[1])+
+                      as.numeric(summary(lmer_diff)$varcor[2])+
+                      as.numeric(summary(lmer_diff)$sigma^2)
+    )
+    
+    boot_lmer_diff <- case_bootstrap(lmer_diff, .f = extract_parameters, resample = c(TRUE,FALSE,FALSE), B = 10000)
+    
+    summary_boot_lmer_diff <- boot_lmer_diff$replicates |>
+      mutate(
+        totalsd = sqrt(vc1 + vc2 + vc3),
+        l_loa = beta - qnorm(1-0.05/2)*totalsd,
+        u_loa = beta + qnorm(1-0.05/2)*totalsd
+      ) |>
+      summarise(
+        mean_bias = fixef(lmer_diff)[[1]],
+        lower_ci_mean = quantile(beta, 0.025),
+        upper_ci_mean = quantile(beta, 0.975),
+        lower_ci_l_loa = quantile(l_loa, 0.025),
+        upper_ci_l_loa = quantile(l_loa, 0.975),
+        lower_ci_u_loa = quantile(u_loa, 0.025),
+        upper_ci_u_loa = quantile(u_loa, 0.975),
+        l_loa = mean_bias - sqrt(as.numeric(summary(lmer_diff)$varcor[1])+
+                                   as.numeric(summary(lmer_diff)$varcor[2])+
+                                   as.numeric(summary(lmer_diff)$sigma^2)) * qnorm(1-0.05/2),
+        u_loa = mean_bias + sqrt(as.numeric(summary(lmer_diff)$varcor[1])+
+                                   as.numeric(summary(lmer_diff)$varcor[2])+
+                                   as.numeric(summary(lmer_diff)$sigma^2)) * qnorm(1-0.05/2)
       )
     
     agree_models <- bind_rows(agree_models,
                               tibble(method = i,
-                                     unnest(tibble((agree_model$Summary.lcc$fitted)),
-                                            cols = c(`(agree_model$Summary.lcc$fitted)`)) |>
-                                       pivot_longer(c(LCC, LPC, LA),
-                                                    names_to = "Statistic",
-                                                    values_to = "Estimate",
-                                                    values_drop_na = TRUE))
-    )
+                                     summary_boot_lmer_diff))
+    
   }
-  
-  agree_models <- agree_models |>
-    rename(session_no = "Time")
   
   return(agree_models)
   
@@ -71,32 +97,64 @@ fit_agree_model <- function(data) {
 
 fit_reli_models <- function(data) {
   reli_models <- tibble(method = as.character(),
-                        CCC = as.numeric(),
-                        Lower = as.numeric(),
-                        Upper = as.numeric(),
-                        SEM = as.numeric())
+                        mean_bias = as.numeric(),
+                        lower_ci_mean = as.numeric(), 
+                        upper_ci_mean = as.numeric(), 
+                        lower_ci_l_loa = as.numeric(), 
+                        upper_ci_l_loa = as.numeric(),
+                        lower_ci_u_loa = as.numeric(),
+                        upper_ci_u_loa = as.numeric(),
+                        l_loa = as.numeric(),
+                        u_loa = as.numeric())
   
-  for(i in unique(data$method)) {
+  set.seed(1988)
+  
+  for(i in c("fdi", "jmc", "mj", "opto")) {
     
-    reli_ccc <- data |>
-      mutate(
-        across(c(ID_num,method), factor)
-      ) |> 
+    data_wide <- data |>
       filter(method == i) |>
-      cccvc(
-        rind = "ID_num",
-        ry = "jump_height",
-        rmet = "session_no",
+      pivot_wider(id_cols = c(ID_num,trial),
+                  names_from = "session_no",
+                  values_from = "jump_height") |>
+      mutate(
+        mean = (`2` + `1`)/2,
+        diff = `2` - `1`
       )
     
-    reli_models <- rbind(reli_models,
-                         tibble(method = i,
-                                CCC = reli_ccc$ccc[1],
-                                Lower = reli_ccc$ccc[2],
-                                Upper = reli_ccc$ccc[3],
-                                SEM = nlme::intervals(reli_ccc$model)$sigma[2],
-                                SEM_lower = nlme::intervals(reli_ccc$model)$sigma[1],
-                                SEM_upper = nlme::intervals(reli_ccc$model)$sigma[3]))
+    lmer_diff <- lmer(diff ~ (1|ID_num),
+                      data = data_wide,
+                      REML = TRUE)
+    
+    totalsd <- sqrt(as.numeric(summary(lmer_diff)$varcor[1])+
+                      as.numeric(summary(lmer_diff)$sigma^2)
+    )
+    
+    boot_lmer_diff <- case_bootstrap(lmer_diff, .f = extract_parameters, resample = c(TRUE,FALSE), B = 10000)
+    
+    summary_boot_lmer_diff <- boot_lmer_diff$replicates |>
+      mutate(
+        totalsd = sqrt(vc1 + vc2),
+        l_loa = beta - qnorm(1-0.05/2)*totalsd,
+        u_loa = beta + qnorm(1-0.05/2)*totalsd
+      ) |>
+      summarise(
+        mean_bias = fixef(lmer_diff)[[1]],
+        lower_ci_mean = quantile(beta, 0.025),
+        upper_ci_mean = quantile(beta, 0.975),
+        lower_ci_l_loa = quantile(l_loa, 0.025),
+        upper_ci_l_loa = quantile(l_loa, 0.975),
+        lower_ci_u_loa = quantile(u_loa, 0.025),
+        upper_ci_u_loa = quantile(u_loa, 0.975),
+        l_loa = mean_bias - sqrt(as.numeric(summary(lmer_diff)$varcor[1])+
+                                   as.numeric(summary(lmer_diff)$sigma^2)) * qnorm(1-0.05/2),
+        u_loa = mean_bias + sqrt(as.numeric(summary(lmer_diff)$varcor[1])+
+                                   as.numeric(summary(lmer_diff)$sigma^2)) * qnorm(1-0.05/2)
+      )
+    
+    reli_models <- bind_rows(reli_models,
+                             tibble(method = i,
+                                    summary_boot_lmer_diff))
+    
   }
   
   return(reli_models)
@@ -104,384 +162,232 @@ fit_reli_models <- function(data) {
 
 ##### Funtions for creating results plots
 
-make_agree_plot <- function(data, agree_model) {
+make_agree_plot <- function(data, agree_models) {
   
-  agree_model <- agree_model |>
-    mutate(facet_lab = "Session Number")
+  plots <- list()
   
-  fdi_jmc_plot <- data |>
-    pivot_wider(id_cols = c(ID_num, trial, session_no),
-                names_from = "method", 
-                values_from = "jump_height") |>
-    select(fdi,jmc,session_no) |>
-    ggplot(aes(x=fdi, y=jmc)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[1:2,],
-              aes(label = glue::glue("rho[CCC] == {round(Estimate,2)}")),
-              x = 50,
-              y = 35,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[1:2,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 30,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[1:2,],
-              aes(label = glue::glue("rho == {round(Estimate,2)}")),
-              x = 50,
-              y = 25,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[1:2,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 20,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[1:2,],
-              aes(label = glue::glue("rho[C[b]] == {round(Estimate,2)}")),
-              x = 50,
-              y = 15,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[1:2,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 10,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Force Decks Impulse-Momentum (cm)",
-      y = "Jump Matt (cm)"
-    ) +
-    facet_grid(session_no~.) +
-    theme_bw() +
-    theme(strip.text = element_blank())
+  for(i in c("jmc", "mj", "opto")) {
+    
+    data_wide <- data |>
+      filter(method == "fdi" | method == i) |>
+      mutate(method = case_when(
+        method == "fdi" ~ "M1",
+        method == "jmc" ~ "M2",
+        method == "mj" ~ "M2",
+        method == "opto" ~ "M2"
+      )) |>
+      pivot_wider(id_cols = c(ID_num,session_no,trial),
+                  names_from = "method",
+                  values_from = "jump_height") |>
+      mutate(
+        mean = (M2 + M1)/2,
+        diff = M2 - M1
+      )
+    
+    agree_model <- agree_models |>
+      filter(method == i)
+    
+    plot <- data_wide |>
+      ggplot(aes(x = mean, y = diff)) +
+      
+      # Add reference line at zero
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      
+      # Add raw data
+      geom_point(alpha = 0.75) +
+      
+      # Add mean bias
+      annotate("rect", alpha = 0.25,
+               xmin = -Inf, xmax = Inf,
+               ymin = agree_model$lower_ci_mean,
+               ymax = agree_model$upper_ci_mean) +
+      geom_hline(yintercept = agree_model$mean_bias,
+                 size = 1) +
+      geom_text(label = glue::glue("Bias = {round(agree_model$mean_bias,2)} cm"),
+                x = max(data_wide$mean) + 0.75,
+                y = agree_model$upper_ci_mean + 1,
+                size = 3,
+                # parse = TRUE
+      ) +
+      geom_text(label = glue::glue("[95%CI: {round(agree_model$lower_ci_mean,2)}, {round(agree_model$upper_ci_mean,2)}]"),
+                x = max(data_wide$mean) + 0.75,
+                y = agree_model$upper_ci_mean + 0.5,
+                size = 3,
+                # parse = TRUE
+      ) +
+      
+      # Add lower LoA
+      annotate("rect", alpha = 0.25,
+               xmin = -Inf, xmax = Inf,
+               ymin = agree_model$lower_ci_l_loa[[1]],
+               ymax = agree_model$upper_ci_l_loa[[1]]) +
+      geom_hline(yintercept = agree_model$l_loa,
+                 size = 1, linetype = "dotted")  +
+      geom_text(label = glue::glue("Lower LoA = {round(agree_model$l_loa,2)} cm"),
+                x = max(data_wide$mean) + 0.75,
+                y = agree_model$lower_ci_l_loa - 1,
+                size = 3,
+                # parse = TRUE
+      ) +
+      geom_text(label = glue::glue("[95%CI: {round(agree_model$lower_ci_l_loa,2)}, {round(agree_model$upper_ci_l_loa,2)}]"),
+                x = max(data_wide$mean) + 0.75,
+                y = agree_model$lower_ci_l_loa - 1.5,
+                size = 3,
+                # parse = TRUE
+      ) +
+      
+      # Add upper LoA
+      annotate("rect", alpha = 0.25,
+               xmin = -Inf, xmax = Inf,
+               ymin = agree_model$lower_ci_u_loa,
+               ymax = agree_model$upper_ci_u_loa) +
+      geom_hline(yintercept = agree_model$u_loa,
+                 size = 1, linetype = "dotted") +
+      geom_text(label = glue::glue("Upper LoA = {round(agree_model$u_loa,2)} cm"),
+                x = max(data_wide$mean) + 0.75,
+                y = agree_model$upper_ci_u_loa + 1,
+                size = 3,
+                # parse = TRUE
+      ) +
+      geom_text(label = glue::glue("[95%CI: {round(agree_model$lower_ci_u_loa,2)}, {round(agree_model$upper_ci_u_loa,2)}]"),
+                x = max(data_wide$mean) + 0.75,
+                y = agree_model$upper_ci_u_loa + 0.5,
+                size = 3,
+                # parse = TRUE
+      ) +
+      
+      scale_x_continuous(limits = c(min(data_wide$mean), max(data_wide$mean) + 5)) +
+      scale_y_continuous(limits = c(min(data_wide$diff)-1, max(data_wide$diff) + 1)) +
+      labs(
+        x = "Mean of Measurements (cm)",
+        y = "Difference of Measurements (cm)"
+      ) +
+      theme_bw()
+    
+    
+    plots[[i]] <- plot
+    
+  }
   
-  fdi_mj_plot <- data |>
-    pivot_wider(id_cols = c(ID_num, trial, session_no),
-                names_from = "method", 
-                values_from = "jump_height") |>
-    select(fdi,mj,session_no) |>
-    ggplot(aes(x=fdi, y=mj)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[3:4,],
-              aes(label = glue::glue("rho[CCC] == {round(Estimate,2)}")),
-              x = 50,
-              y = 35,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 30,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[3:4,],
-              aes(label = glue::glue("rho == {round(Estimate,2)}")),
-              x = 50,
-              y = 25,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 20,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[3:4,],
-              aes(label = glue::glue("rho[C[b]] == {round(Estimate,2)}")),
-              x = 50,
-              y = 15,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[3:4,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 10,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Force Decks Impulse-Momentum (cm)",
-      y = "MyJump App (cm)"
-    ) +
-    facet_grid(session_no~.) +
-    theme_bw() +
-    theme(strip.text = element_blank())
-  
-  fdi_opto_plot <- data |>
-    pivot_wider(id_cols = c(ID_num, trial, session_no),
-                names_from = "method", 
-                values_from = "jump_height") |>
-    select(fdi,opto,session_no) |>
-    mutate(facet_lab = "Session Number") |>
-    ggplot(aes(x=fdi, y=opto)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[5:6,],
-              aes(label = glue::glue("rho[CCC] == {round(Estimate,2)}")),
-              x = 50,
-              y = 35,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LCC")[5:6,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 30,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[5:6,],
-              aes(label = glue::glue("rho == {round(Estimate,2)}")),
-              x = 50,
-              y = 25,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LPC")[5:6,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 20,
-              size = 3
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[5:6,],
-              aes(label = glue::glue("rho[C[b]] == {round(Estimate,2)}")),
-              x = 50,
-              y = 15,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(agree_model, Statistic == "LA")[5:6,],
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 10,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Force Decks Impulse-Momentum (cm)",
-      y = "Optojump (cm)"
-    ) +
-    ggh4x::facet_nested(facet_lab + session_no~.) +
-    theme_bw() +
-    theme(strip.background = element_blank(),
-          strip.text = element_text(size = 12))
-  
-  
-  (fdi_jmc_plot + fdi_mj_plot + fdi_opto_plot) +
-    plot_layout(axes = "collect") +
-    plot_annotation(title = "Agreement Between Methods",
-                    subtitle = expression(paste("Concordance Correlation Coefficients (", rho[CCC], "), Pearson's Correlation (", rho, "), and Bias Correction (", rho[C[b]], ") with Interval Estimates")),
-                    caption = "Each compared to gold standard (Force Decks Impulse-Momentum)")
+  (plots$jmc + labs(title = "Jump Mat")) +
+    (plots$mj + labs(title = "MyJump App")) +
+    (plots$opto + labs(title = "Optojump")) +
+        plot_annotation(title = "Agreement Between Methods",
+                    subtitle = "Mixed Effects Model Mean Bias and 95% Limits of Agreement",
+                    caption = "Each method compared to gold standard (Force Decks Impulse-Momentum)\n
+                    Intervals estimates for mean bias and limits of agreement are 95% quantiles from nonparametric bootstrap resampling participants 10000 times")
   
 }
 
 make_reli_plot <- function(data, reli_models) {
-  fdi_reli_plot <- data |>
-    filter(method == "fdi") |>
-    pivot_wider(id_cols = c(ID_num, trial),
-                names_from = "session_no", 
-                values_from = "jump_height") |>
-    ggplot(aes(x=`1`, y=`2`)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(reli_models, method == "fdi"),
-              aes(label = glue::glue("SEM = {round(SEM,2)} cm")),
-              x = 50,
-              y = 25,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "fdi"),
-              aes(label = glue::glue("[95%CI: {round(SEM_lower,2)}, {round(SEM_upper,2)}]")),
-              x = 50,
-              y = 22.5,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "fdi"),
-              aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
-              x = 50,
-              y = 20,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(reli_models, method == "fdi"),
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 17.5,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Session 1",
-      y = "Session 2",
-      title = "Force Decks Impulse Momementum"
-    ) +
-    theme_bw() +
-    theme(strip.background = element_blank(),
-          strip.text = element_text(size = 12))
+  plots <- list()
   
-  jmc_reli_plot <- data |>
-    filter(method == "jmc") |>
-    pivot_wider(id_cols = c(ID_num, trial),
-                names_from = "session_no", 
-                values_from = "jump_height") |>
-    ggplot(aes(x=`1`, y=`2`)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(reli_models, method == "jmc"),
-              aes(label = glue::glue("SEM = {round(SEM,2)} cm")),
-              x = 50,
-              y = 25,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "jmc"),
-              aes(label = glue::glue("[95%CI: {round(SEM_lower,2)}, {round(SEM_upper,2)}]")),
-              x = 50,
-              y = 22.5,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "jmc"),
-              aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
-              x = 50,
-              y = 20,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(reli_models, method == "jmc"),
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 17.5,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Session 1",
-      y = "Session 2",
-      title = "Jump Mat"
-    ) +
-    theme_bw() +
-    theme(strip.background = element_blank(),
-          strip.text = element_text(size = 12))
-  
-  opto_reli_plot <- data |>
-    filter(method == "opto") |>
-    pivot_wider(id_cols = c(ID_num, trial),
-                names_from = "session_no", 
-                values_from = "jump_height") |>
-    ggplot(aes(x=`1`, y=`2`)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(reli_models, method == "opto"),
-              aes(label = glue::glue("SEM = {round(SEM,2)} cm")),
-              x = 50,
-              y = 25,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "opto"),
-              aes(label = glue::glue("[95%CI: {round(SEM_lower,2)}, {round(SEM_upper,2)}]")),
-              x = 50,
-              y = 22.5,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "opto"),
-              aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
-              x = 50,
-              y = 20,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(reli_models, method == "opto"),
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 17.5,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Session 1",
-      y = "Session 2",
-      title = "Optojump"
-    ) +
-    theme_bw() +
-    theme(strip.background = element_blank(),
-          strip.text = element_text(size = 12))
-  
-  mj_reli_plot <- data |>
-    filter(method == "mj") |>
-    pivot_wider(id_cols = c(ID_num, trial),
-                names_from = "session_no", 
-                values_from = "jump_height") |>
-    ggplot(aes(x=`1`, y=`2`)) +
-    geom_point() +
-    geom_abline(intercept = 0, slope = 1,
-                linetype = "dashed") +
-    geom_text(data = filter(reli_models, method == "mj"),
-              aes(label = glue::glue("SEM = {round(SEM,2)} cm")),
-              x = 50,
-              y = 25,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "mj"),
-              aes(label = glue::glue("[95%CI: {round(SEM_lower,2)}, {round(SEM_upper,2)}]")),
-              x = 50,
-              y = 22.5,
-              size = 3
-    ) +
-    geom_text(data = filter(reli_models, method == "mj"),
-              aes(label = glue::glue("rho[CCC] == {round(CCC,2)}")),
-              x = 50,
-              y = 20,
-              size = 3,
-              parse = TRUE
-    ) +
-    geom_text(data = filter(reli_models, method == "mj"),
-              aes(label = glue::glue("[95%CI: {round(Lower,2)}, {round(Upper,2)}]")),
-              x = 50,
-              y = 17.5,
-              size = 3
-    ) +
-    scale_x_continuous(limits = c(10,60)) +
-    scale_y_continuous(limits = c(10,60)) +
-    labs(
-      x = "Session 1",
-      y = "Session 2",
-      title = "MyJump App"
-    ) +
-    theme_bw() +
-    theme(strip.background = element_blank(),
-          strip.text = element_text(size = 12))
-  
-  
-  fdi_reli_plot + jmc_reli_plot + opto_reli_plot + mj_reli_plot +
-    plot_layout(axes = "collect") +
-    plot_annotation(title = "Reliability Across Sessions",
-                    subtitle = expression(paste("Standard Error of Measurement (SEM) and Concordance Correlation Coefficients (", rho[CCC], ") with Interval Estimates")),
-                    theme = theme(plot.subtitle = element_text(size = 10)))
+  for(i in c("fdi", "jmc", "mj", "opto")) {
     
+    data_wide <- data |>
+      filter(method == i)|>
+      pivot_wider(id_cols = c(ID_num,trial),
+                  names_from = "session_no",
+                  values_from = "jump_height") |>
+      mutate(
+        mean = (`2` + `1`)/2,
+        diff = `2` - `1`
+      )
+    
+    reli_model <- reli_models |>
+      filter(method == i)
+    
+    plot <- data_wide |>
+      ggplot(aes(x = mean, y = diff)) +
+      
+      # Add reference line at zero
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      
+      # Add raw data
+      geom_point(alpha = 0.75) +
+      
+      # Add mean bias
+      annotate("rect", alpha = 0.25,
+               xmin = -Inf, xmax = Inf,
+               ymin = reli_model$lower_ci_mean,
+               ymax = reli_model$upper_ci_mean) +
+      geom_hline(yintercept = reli_model$mean_bias,
+                 size = 1) +
+      geom_text(label = glue::glue("Bias = {round(reli_model$mean_bias,2)} cm"),
+                x = max(data_wide$mean) + 0.75,
+                y = reli_model$upper_ci_mean + 1,
+                size = 3,
+                # parse = TRUE
+      ) +
+      geom_text(label = glue::glue("[95%CI: {round(reli_model$lower_ci_mean,2)}, {round(reli_model$upper_ci_mean,2)}]"),
+                x = max(data_wide$mean) + 0.75,
+                y = reli_model$upper_ci_mean + 0.5,
+                size = 3,
+                # parse = TRUE
+      ) +
+      
+      # Add lower LoA
+      annotate("rect", alpha = 0.25,
+               xmin = -Inf, xmax = Inf,
+               ymin = reli_model$lower_ci_l_loa[[1]],
+               ymax = reli_model$upper_ci_l_loa[[1]]) +
+      geom_hline(yintercept = reli_model$l_loa,
+                 size = 1, linetype = "dotted")  +
+      geom_text(label = glue::glue("Lower LoA = {round(reli_model$l_loa,2)} cm"),
+                x = max(data_wide$mean) + 0.75,
+                y = reli_model$lower_ci_l_loa - 1,
+                size = 3,
+                # parse = TRUE
+      ) +
+      geom_text(label = glue::glue("[95%CI: {round(reli_model$lower_ci_l_loa,2)}, {round(reli_model$upper_ci_l_loa,2)}]"),
+                x = max(data_wide$mean) + 0.75,
+                y = reli_model$lower_ci_l_loa - 1.5,
+                size = 3,
+                # parse = TRUE
+      ) +
+      
+      # Add upper LoA
+      annotate("rect", alpha = 0.25,
+               xmin = -Inf, xmax = Inf,
+               ymin = reli_model$lower_ci_u_loa,
+               ymax = reli_model$upper_ci_u_loa) +
+      geom_hline(yintercept = reli_model$u_loa,
+                 size = 1, linetype = "dotted") +
+      geom_text(label = glue::glue("Upper LoA = {round(reli_model$u_loa,2)} cm"),
+                x = max(data_wide$mean) + 0.75,
+                y = reli_model$upper_ci_u_loa + 1,
+                size = 3,
+                # parse = TRUE
+      ) +
+      geom_text(label = glue::glue("[95%CI: {round(reli_model$lower_ci_u_loa,2)}, {round(reli_model$upper_ci_u_loa,2)}]"),
+                x = max(data_wide$mean) + 0.75,
+                y = reli_model$upper_ci_u_loa + 0.5,
+                size = 3,
+                # parse = TRUE
+      ) +
+      
+      scale_x_continuous(limits = c(min(data_wide$mean), max(data_wide$mean) + 5)) +
+      scale_y_continuous(limits = c(min(data_wide$diff)-2, max(data_wide$diff) + 2)) +
+      labs(
+        x = "Mean of Measurements (cm)",
+        y = "Difference of Measurements (cm)"
+      ) +
+      theme_bw()
+    
+    
+    plots[[i]] <- plot
+    
+  }
+  
+  (plots$fdi + labs(title = "Force Decks")) +
+    (plots$jmc + labs(title = "Jump Mat")) +
+    (plots$mj + labs(title = "MyJump App")) +
+    (plots$opto + labs(title = "Optojump")) + 
+    plot_annotation(title = "Test-Retest Reliability Across Methods",
+                    subtitle = "Mixed Effects Model Mean Bias and 95% Limits of Agreement",
+                    caption = "Each method compared to gold standard (Force Decks Impulse-Momentum)\n
+                    Intervals estimates for mean bias and limits of agreement are 95% quantiles from nonparametric bootstrap resampling participants 10000 times")
+  
   
   
 } 

@@ -1,7 +1,6 @@
 ---
 articletitle: |
   The Reliability and Validity of Different Methods for Measuring Countermovement Jump Height
-# shorttitle: "Doe et al. (2022)" # usually auto-generated
 format: sportrxiv-pdf
 author:
   - name: Bailey Cameron

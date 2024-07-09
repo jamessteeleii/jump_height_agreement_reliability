@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|1447a2594c60fc63|||||||||||||||
+.Random.seed|object|eea797898243fde6|||||||||||||||
 agree_model|stem|d5600b7aa11b2762|52cda8bccea36fb1|d19fd56b3b20de2f|-186591880||t19888.5616496752s|88f45afaea2696d8|482|rds|local|vector|||59.98||
 agree_model_results|stem|d1e88ede9ea488f1|b3e3cfbb9a687cc7|c25777b31ae6235e|1252300494||t19885.4984544346s||356|rds|local|vector|||0.06||Cant rename columns that dont exist. Column Time doesnt exist.
 agree_models|stem|dc53f21bb310f925|464dcceb626a1054|50c7555a227d241a|1246331167||t19889.3056644945s|26e03a9007ee0ad8|483|rds|local|vector|||539.24||
@@ -14,7 +14,7 @@ fit_reli_models|function|a7679c4abaaa39f8|||||||||||||||
 make_agree_plot|function|c67f3469fe262085|||||||||||||||
 make_plot_tiff|function|ae5dc1809ded3893|||||||||||||||
 make_reli_plot|function|3f0f38d83a61564f|||||||||||||||
-pre_print|stem|059bb049c1d95bf0|88d8a867fa6b7e11|c5820d7095882f06|-1429529559|pre_print/pre_print.pdf*pre_print/pre_print.qmd|t19911.3651294395s|726bead46fde0296|282446|file|local|vector|||12.54||
+pre_print|stem|059bb049c1d95bf0|88d8a867fa6b7e11|c5820d7095882f06|-1429529559|pre_print/pre_print.pdf*pre_print/pre_print.qmd|t19911.3651294395s||282446|file|local|vector|||13.28||Error running quarto cli.ℹ Rerun with quiet  FALSE to see the full error message.Caused by error System command quarto.exe failed
 prepare_data|function|d51169f875734398|||||||||||||||
 reli_models|stem|6c23b058595ccf2f|db3483e13f2af312|ac56df49e8bfc951|-2038210276||t19889.3120305291s|833a11212b5e5ace|574|rds|local|vector|||550.02||
 reli_plot|stem|4fe3cf273f8919c0|208ec6dc2514549d|1cf266a8c11e342a|-2026709236||t19911.3648778986s|3bb65f6caa52ba02|312075|rds|local|vector|||0.22||

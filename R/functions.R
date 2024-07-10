@@ -270,7 +270,7 @@ make_agree_plot <- function(data, agree_models) {
   }
   
   (plots$jmc + labs(title = "Just Jump System")) +
-    (plots$mj + labs(title = "MyJump App")) +
+    (plots$mj + labs(title = "My Jump Lab")) +
     (plots$opto + labs(title = "Optojump")) +
         plot_annotation(title = "Agreement Between Methods",
                     subtitle = "Mixed Effects Model Mean Bias and 95% Limits of Agreement",
@@ -381,7 +381,7 @@ make_reli_plot <- function(data, reli_models) {
   
   (plots$fdi + labs(title = "Force Decks")) +
     (plots$jmc + labs(title = "Just Jump System")) +
-    (plots$mj + labs(title = "MyJump App")) +
+    (plots$mj + labs(title = "My Jump Lab")) +
     (plots$opto + labs(title = "Optojump")) + 
     plot_annotation(title = "Test-Retest Reliability Across Methods",
                     subtitle = "Mixed Effects Model Mean Bias and 95% Limits of Agreement",

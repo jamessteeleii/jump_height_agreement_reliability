@@ -3,7 +3,7 @@ library(targets)
 library(tarchetypes)
 source("R/functions.R")
 tar_option_set(packages = c("tidyverse", "lme4", "lmeresampler",
-                            "quarto",
+                            "quarto", "here",
                             "patchwork"))
 
 list(

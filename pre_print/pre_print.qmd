@@ -29,7 +29,9 @@ keywords: [Jumping, ForceDecks, OptoJump, Just Jump System, My Jump Lab] # optio
 suppl-link: https://osf.io/e7qg5/
 reference-section-title: References
 printnote: "PREPRINT - NOT PEER REVIEWED" # if post print, include "POSTPRINT" then link to the published article
-bibliography: bibliography.bib  
+bibliography: 
+  - bibliography.bib  
+  - grateful-refs.bib
 pdf-engine: xelatex
 ---
 
@@ -150,6 +152,8 @@ cite_packages(output = "paragraph", out.dir = ".")
 #| message: false
 #| warning: false
 #| echo: false
+
+targets::tar_config_set(store = here::here('_targets'))
 
 targets::tar_load(agree_models)
 targets::tar_load(reli_models)
